@@ -1,4 +1,5 @@
 # VPC resource creation
+# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc.html
 resource "aws_vpc" "main" {
   cidr_block           = var.cidr_block
   instance_tenancy     = "default"
@@ -14,4 +15,20 @@ resource "aws_vpc" "main" {
     }
   )
   #wanted to give tags in the format- projectName-environment- <resource_name>
+}
+
+#Internet Gateway
+# https://registry.terraform.io/providers/hashicorp/aws/6.17.0/docs/resources/internet_gateway.html
+
+
+resource "aws_internet_gateway" "main" {
+  vpc_id = aws_vpc.main.id
+
+  tags = merge(
+    var.igw_tags,
+    local.common_tags,
+    {
+      Name = "${local.common_name_suffix}-InternetGateway-Resource"
+    }
+  )
 }

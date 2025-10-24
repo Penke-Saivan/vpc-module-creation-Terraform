@@ -4,17 +4,21 @@ variable "cidr_block" {
 
 variable "environment" {
   type = string
- 
+
 }
 
 variable "project" {
   type = string
- 
+
 }
 
 #user sends-vpc_tags
 
 variable "vpc_tags" {
-  type = map
+  type    = map(any)
+  default = {}
+}
+variable "igw_tags" {
+  type    = map(any)
   default = {}
 }
