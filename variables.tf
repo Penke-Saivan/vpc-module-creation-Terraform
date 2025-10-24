@@ -75,3 +75,12 @@ variable "route_table_tags_database" {
 
   }
 }
+variable "eip_tags" {
+  type    = map(any)
+  default = {}
+}
+variable "nat_tags" {
+  type    = map(any)
+  default = {}
+}
+

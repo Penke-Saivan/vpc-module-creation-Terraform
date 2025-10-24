@@ -147,3 +147,80 @@ resource "aws_route_table" "database" {
     }
   )
 }
+
+# ----------------------Routes (Not associations with subnet------------------------)
+
+# Public- Route
+
+# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route
+
+
+resource "aws_route" "public" {
+  route_table_id         = aws_route_table.public.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_internet_gateway.main.id
+  # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route#gateway_id-1
+}
+
+# Now we need NAT Gateway (which requires elastic IP)  routing Private and database subnets
+
+# Elastic IP
+
+# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eip
+
+# Note in doc- EIP may require IGW to exist prior to association. Use depends_on to set an explicit dependency on the IGW.
+
+resource "aws_eip" "nat" {
+
+  domain = "vpc"
+  tags = merge(
+    var.eip_tags,
+    local.common_tags,
+    {
+      Name = "${local.common_name_suffix}-EIP"
+    }
+  )
+}
+
+#- Now NAT Gateway
+
+resource "aws_nat_gateway" "nat" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public[0].id
+  #*****************-Attaching to Public SUbnet ID to go out to the internet via Internet gateway already attached to public subnet
+
+  tags = merge(
+    var.nat_tags,
+    local.common_tags,
+    {
+      Name = "${local.common_name_suffix}-NAT-Gateway"
+    }
+  )
+  # To ensure proper ordering, it is recommended to add an explicit dependency
+  # on the Internet Gateway for the VPC.
+  depends_on = [aws_internet_gateway.main]
+}
+
+
+# Private- Route
+# Private egress route through NAT
+
+
+resource "aws_route" "private" {
+  route_table_id         = aws_route_table.private.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_nat_gateway.nat.id
+  # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route#gateway_id-1
+}
+
+# Database- Route
+# Database egress route through NAT
+
+
+resource "aws_route" "database" {
+  route_table_id         = aws_route_table.database.id
+  destination_cidr_block = "0.0.0.0/0"
+  gateway_id             = aws_nat_gateway.nat.id
+  # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route#gateway_id-1
+}
+
