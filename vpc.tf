@@ -62,10 +62,10 @@ resource "aws_subnet" "public" {
 
 resource "aws_subnet" "private" {
   # --------------Count Loop------------------------
-  count                   = length(var.private-subnet-cidr-block)
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.private-subnet-cidr-block[count.index]
-  availability_zone       = local.az_names[count.index]
+  count             = length(var.private-subnet-cidr-block)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.private-subnet-cidr-block[count.index]
+  availability_zone = local.az_names[count.index]
   # map_public_ip_on_launch = true
   #(Optional) Specify true to indicate that instances launched into the subnet should be assigned a public IP address. Default is false
 
@@ -82,10 +82,10 @@ resource "aws_subnet" "private" {
 
 resource "aws_subnet" "database" {
   # --------------Count Loop------------------------
-  count                   = length(var.database-subnet-cidr-block)
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.database-subnet-cidr-block[count.index]
-  availability_zone       = local.az_names[count.index]
+  count             = length(var.database-subnet-cidr-block)
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = var.database-subnet-cidr-block[count.index]
+  availability_zone = local.az_names[count.index]
   # map_public_ip_on_launch = true
   #(Optional) Specify true to indicate that instances launched into the subnet should be assigned a public IP address. Default is false
 
@@ -94,6 +94,56 @@ resource "aws_subnet" "database" {
     local.common_tags,
     {
       Name = "${local.common_name_suffix}-database-${local.az_names[count.index]}" # roboshop-dev-database-us-east-1a
+    }
+  )
+}
+
+
+#-----------------------------Route-Table(not Routes)-----------------------
+
+# - https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route_table#basic-example
+
+#Public routeTable
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.main.id
+
+
+
+  tags = merge(
+    var.route_table_tags_public,
+    local.common_tags,
+    {
+      Name = "${local.common_name_suffix}-Route-Table-Resource_public"
+    }
+  )
+}
+
+#private routeTable
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.main.id
+
+
+
+  tags = merge(
+    var.route_table_tags_private,
+    local.common_tags,
+    {
+      Name = "${local.common_name_suffix}-Route-Table-Resource_private"
+    }
+  )
+}
+
+#Database routeTable
+resource "aws_route_table" "database" {
+  vpc_id = aws_vpc.main.id
+
+
+
+  tags = merge(
+    var.route_table_tags_database,
+    local.common_tags,
+    {
+      Name = "${local.common_name_suffix}-Route-Table-Resource_database"
     }
   )
 }
