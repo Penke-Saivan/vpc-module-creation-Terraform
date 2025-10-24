@@ -5,4 +5,5 @@ locals {
     Terraform=true
   }
   common_name_suffix="${var.project}-${var.environment}"
+  az_names = slice(data.aws_availability_zones.availables.names,0,2)
 }
