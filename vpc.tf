@@ -183,7 +183,7 @@ resource "aws_eip" "nat" {
 }
 
 #- Now NAT Gateway
-
+# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/nat_gateway
 resource "aws_nat_gateway" "nat" {
   allocation_id = aws_eip.nat.id
   subnet_id     = aws_subnet.public[0].id
@@ -209,7 +209,7 @@ resource "aws_nat_gateway" "nat" {
 resource "aws_route" "private" {
   route_table_id         = aws_route_table.private.id
   destination_cidr_block = "0.0.0.0/0"
-  gateway_id             = aws_nat_gateway.nat.id
+  nat_gateway_id         = aws_nat_gateway.nat.id
   # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route#gateway_id-1
 }
 
@@ -220,7 +220,31 @@ resource "aws_route" "private" {
 resource "aws_route" "database" {
   route_table_id         = aws_route_table.database.id
   destination_cidr_block = "0.0.0.0/0"
-  gateway_id             = aws_nat_gateway.nat.id
+  nat_gateway_id         = aws_nat_gateway.nat.id
   # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route#gateway_id-1
 }
 
+
+#--- Last step to associate subnets with route tables
+# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route_table_association
+
+# Public subnets association with public route table 
+resource "aws_route_table_association" "public" {
+  count          = length(var.public-subnet-cidr-block)
+  subnet_id      = aws_subnet.public[count.index].id
+  route_table_id = aws_route_table.public.id
+}
+
+# Private subnets association with Private route table 
+resource "aws_route_table_association" "private" {
+  count          = length(var.private-subnet-cidr-block)
+  subnet_id      = aws_subnet.private[count.index].id
+  route_table_id = aws_route_table.private.id
+}
+
+# Database subnets association with Database route table 
+resource "aws_route_table_association" "database" {
+  count          = length(var.database-subnet-cidr-block)
+  subnet_id      = aws_subnet.database[count.index].id
+  route_table_id = aws_route_table.database.id
+}
