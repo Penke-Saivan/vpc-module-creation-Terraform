@@ -1,5 +1,5 @@
 # Terraform AWS VPS
-This module creates below 
+This module creates below resources
 *    VPC
 *    IGW
 *    2 Public subnets in us-east-1a and us-east-1b AZ
